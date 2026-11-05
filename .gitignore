@@ -1,0 +1,7 @@
+/.pixi/
+/build/
+/.upstream/
+/models/
+*.part
+__pycache__/
+*.pyc

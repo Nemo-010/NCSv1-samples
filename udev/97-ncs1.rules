@@ -1,0 +1,7 @@
+# Intel Movidius NCS1 (Myriad 2, MA2450). Verbatim from the NCSDK tree:
+#   api/src/97-usbboot.rules @ c3714ed607d3a4c6612668428765fea82efee166
+# Install once:  sudo install -m 0644 udev/97-ncs1.rules /etc/udev/rules.d/
+#                sudo udevadm control --reload-rules && sudo udevadm trigger
+SUBSYSTEM=="usb", ATTRS{idProduct}=="2150", ATTRS{idVendor}=="03e7", GROUP="users", MODE="0666", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="usb", ATTRS{idProduct}=="f63b", ATTRS{idVendor}=="03e7", GROUP="users", MODE="0666", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ATTRS{idProduct}=="2150", ATTRS{idVendor}=="03e7", GROUP="users", MODE="0666", ENV{ID_MM_DEVICE_IGNORE}="1"

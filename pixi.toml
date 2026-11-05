@@ -1,0 +1,30 @@
+[workspace]
+name = "NCSv1-samples"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.11.*"
+numpy = ">=2,<3"
+pillow = ">=11,<12"
+libusb = ">=1.0.27,<2"
+
+[feature.build.dependencies]
+c-compiler = "*"
+
+[environments]
+default = { solve-group = "default" }
+build = { features = ["build"], solve-group = "default" }
+
+[activation.env]
+LD_LIBRARY_PATH = "$PIXI_PROJECT_ROOT/build:$CONDA_PREFIX/lib"
+PYTHONPATH = "$PIXI_PROJECT_ROOT:$PIXI_PROJECT_ROOT/.upstream/api/python"
+
+[tasks]
+setup = { cmd = "python tools/setup.py", description = "library, firmware, one model, one image; idempotent" }
+doctor = { cmd = "python tools/doctor.py", depends-on = ["setup"] }
+hello = { cmd = "python NCSv1-hello/run.py", depends-on = ["setup"] }
+infer = { cmd = "python NCSv1-infer/run.py", depends-on = ["setup"] }
+demo = { cmd = "python NCSv1-infer/run.py --image models/guitar.png", depends-on = ["setup"] }
+build-local = { cmd = "python tools/build_local.py", description = "compile libmvnc from the pinned sources instead of Intel's binary", depends-on = ["setup"] }
+udev = "python tools/udev.py"
