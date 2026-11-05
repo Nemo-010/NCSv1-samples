@@ -16,6 +16,7 @@ c-compiler = "*"
 # the default environment
 [feature.camera.dependencies]
 ffmpeg = "*"
+tk = "*"
 
 [feature.camera.tasks]
 camera = { cmd = "python NCSv1-camera/run.py", depends-on = ["setup"] }

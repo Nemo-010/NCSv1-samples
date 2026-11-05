@@ -36,7 +36,8 @@ The rest of the surface:
 pixi run hello                                  # enumerate, open, close
 pixi run infer -- --image picture.jpg           # classify your own image
 pixi run infer -- --image picture.jpg --repeat 50 --graph models/mine.graph
-pixi run -e camera camera                       # live loop on /dev/video0
+pixi run -e camera camera                       # live loop, window + labels
+pixi run -e camera camera --preview http        # same frames as a local MJPEG page
 pixi run -e camera camera --source clip.mp4 --dry-run
 pixi run -e build build-local                   # library from source, not Intel's binary
 ```
@@ -79,14 +80,27 @@ reports device trouble through `ncs1env.explain()` rather than a traceback.
 * `NCSv1-infer` — centre-crop, resize, classify, top-k, optional `--repeat`
   timing. Pillow and numpy do the image; the graph blob goes to the device
   untouched.
-* `NCSv1-camera` — the live loop: frames from ffmpeg, one graph, per-frame
-  inference rate on a status line, Ctrl-C to stop. `--dry-run` reads frames and
-  checks the pipeline without a stick, which is also how the sample is tested.
+* `NCSv1-camera` — the live loop: frames from ffmpeg, one graph, a preview with
+  the top-k labels drawn on it, per-frame inference rate on the status line,
+  Ctrl-C to stop. `--dry-run` reads frames and checks the pipeline without a
+  stick, which is also how the sample is tested.
 
 The camera sample uses ffmpeg for capture instead of OpenCV: one conda-forge
 package, it owns the V4L2 ioctls and the colour conversion, and it is not a
 fork of anything, so `cv2` is still not installed anywhere. Point `--source` at
 a device, a video file, or a `lavfi:` pattern.
+
+The preview has three modes, because "show me the frames" has three answers:
+
+| `--preview` | what you get |
+| --- | --- |
+| `window` (default) | a tkinter window, frames plus the labels drawn on them. Falls back with a message when there is no display. |
+| `http` | the same frames as `multipart/x-mixed-replace` on `127.0.0.1:8099`, so any browser can watch it (loopback only) and a headless box still has a preview |
+| `off` | nothing; the status line only |
+
+`--preview-size` (384 by default) is display only: the stick always gets
+`--size` (224). Both the window and the stream show exactly the crop the model
+sees, upscaled, rather than the raw camera frame with the crop hidden.
 
 ## What is not ported, and why
 
