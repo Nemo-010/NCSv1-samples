@@ -43,8 +43,10 @@ def runtime():
             link.unlink(missing_ok=True)
             link.symlink_to("libmvnc.so.0")
     else:
-        say("no prebuilt library for %s/%s" % (sys.platform, platform.machine()))
-        say("  pixi run -e build build-local   builds it from the pinned sources")
+        say("this project is linux x86_64 only; %s/%s is not supported" %
+            (sys.platform, platform.machine()))
+        say("  Intel's library is an ELF object and the stick has no driver "
+            "path here")
     tar_member(pins.TARBALL_CACHE, pins.FIRMWARE_MEMBER, pins.FIRMWARE_DEST,
                pins.FIRMWARE_SHA256, "firmware")
 

@@ -100,16 +100,16 @@ tarball (the default, 32 KB) or a build from the pinned sources
 (`pixi run -e build build-local`). Both are hash-checked; `doctor` tells you
 which one you are running.
 
-## Platforms
+## Platform: linux x86_64 only
 
-The workflow — fetching, hashing, extracting, building, diagnosing — is Python
-standard library, so it behaves the same anywhere pixi does.
+`pixi.toml` declares `platforms = ["linux-64"]` and the lockfile contains no
+other target. That is the whole support statement: this is not a portable
+project that happens to run here, it is a project for one platform.
 
-The runtime is narrower, because the hardware is: Intel's prebuilt library is a
-linux x86_64 ELF, and the sources are POSIX C over libusb. On other platforms
-put your own platform in `pixi.toml`, then `pixi run -e build build-local` and
-the compiler comes from the environment. There is no Windows path for this
-stick that this repo can offer.
+The reason is the hardware, not the tooling. Intel's `libmvnc.so.0` is a linux
+x86_64 ELF object, the fallback build is POSIX C over libusb, and the stick has
+no Windows driver path at all. The Python in `tools/` would run anywhere; the
+runtime it sets up would not.
 
 ## If it does not work
 
