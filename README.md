@@ -36,6 +36,8 @@ The rest of the surface:
 pixi run hello                                  # enumerate, open, close
 pixi run infer -- --image picture.jpg           # classify your own image
 pixi run infer -- --image picture.jpg --repeat 50 --graph models/mine.graph
+pixi run -e camera camera                       # live loop on /dev/video0
+pixi run -e camera camera --source clip.mp4 --dry-run
 pixi run -e build build-local                   # library from source, not Intel's binary
 ```
 
@@ -55,7 +57,7 @@ from `.upstream/` and the library is loaded from `./build`.
 | `upstream/pins.py` | every third-party artefact and its sha256, in one importable file. |
 | `tools/` | Python, standard library only: `util` (verified download, tar member, sha256), `setup`, `build_local`, `doctor`, `udev`. |
 | `ncs1env.py` | the only shim: a numpy-2-compatible tensor for Intel's unchanged binding, plus status explanations. |
-| `NCSv1-hello/`, `NCSv1-infer/` | samples. |
+| `NCSv1-*/` | samples. |
 | `.upstream/`, `build/`, `models/` | generated, gitignored. |
 
 Sources are fetched at a pinned commit and hash-checked, never vendored and
@@ -63,9 +65,9 @@ never edited, so a changed upstream cannot change your build quietly. Moving to
 another upstream commit means changing `NCSDK_COMMIT` and the hashes together,
 in one file, on purpose.
 
-Two environments, because the compiler is the heaviest thing here and running a
-sample does not need it: `default` is python/numpy/pillow/libusb, `build` adds
-`c-compiler` and exists for `build-local`.
+Three environments, so a sample only pays for what it uses: `default` is
+python/numpy/pillow/libusb, `build` adds `c-compiler` for `build-local`,
+`camera` adds `ffmpeg` for the live loop.
 
 ## Samples
 
@@ -77,6 +79,44 @@ reports device trouble through `ncs1env.explain()` rather than a traceback.
 * `NCSv1-infer` — centre-crop, resize, classify, top-k, optional `--repeat`
   timing. Pillow and numpy do the image; the graph blob goes to the device
   untouched.
+* `NCSv1-camera` — the live loop: frames from ffmpeg, one graph, per-frame
+  inference rate on a status line, Ctrl-C to stop. `--dry-run` reads frames and
+  checks the pipeline without a stick, which is also how the sample is tested.
+
+The camera sample uses ffmpeg for capture instead of OpenCV: one conda-forge
+package, it owns the V4L2 ioctls and the colour conversion, and it is not a
+fork of anything, so `cv2` is still not installed anywhere. Point `--source` at
+a device, a video file, or a `lavfi:` pattern.
+
+## What is not ported, and why
+
+Upstream has ten examples. Three are here, in their useful form, and the rest
+fall into two honest buckets:
+
+* **Needs a graph nobody can build any more.** `caffe/AlexNet`,
+  `caffe/GoogLeNet`, `caffe/SqueezeNet` and `tensorflow/inception_v3` are all
+  "load this blob and classify". The code is the same shape as `NCSv1-infer`,
+  which already takes `--graph`, so the missing piece is the blob: upstream
+  ships one for inception_v1 (pinned here) and one for inception_v3 — a valid
+  v2 blob, 54 MB, 114 stages, sha256 `8c55ade2…0705c` — which is not pinned
+  because nobody wants 54 MB in a first run. The Caffe ones ship
+  no blob at all, and making one means Intel's compiler on the forked
+  TensorFlow. `NCSv1-infer --graph yours.graph` is the port; the graph is the
+  part this repo cannot supply.
+* **Needs hardware or a stack that is not this one.** `apps/multistick_cpp`
+  wants two sticks and is the same API calls in a loop over device names.
+  Current `ncappzoo` samples (`simple_classifier_py_camera`, `birds`,
+  `gender_age`, `classifier_gui`, the realsense ones) have moved to OpenVINO's
+  MYRIAD plugin with IR files, which is NCS2 territory: they are not NCSDK
+  samples any more and nothing in them loads on MA2450. `birds` imports
+  `openvino.inference_engine` and wants `googlenet-v1.xml`; `classifier_gui`
+  wants three IRs; `simple_classifier_py_camera` wants OpenVINO's `setupvars.sh`
+  to be sourced before it even starts.
+
+So the camera one did not get ported from a file, it got rewritten around the
+one graph this SDK generation can still load. If you want a specific ncappzoo
+app, say which and check whether an NCS1 `.graph` for its network exists
+anywhere; if it does, it is a ten-line sample here.
 
 ## What is still Intel's
 

@@ -12,9 +12,18 @@ libusb = ">=1.0.27,<2"
 [feature.build.dependencies]
 c-compiler = "*"
 
+# the camera sample needs a frame source; nothing else does, so it stays out of
+# the default environment
+[feature.camera.dependencies]
+ffmpeg = "*"
+
+[feature.camera.tasks]
+camera = { cmd = "python NCSv1-camera/run.py", depends-on = ["setup"] }
+
 [environments]
 default = { solve-group = "default" }
 build = { features = ["build"], solve-group = "default" }
+camera = { features = ["camera"], solve-group = "default" }
 
 [activation.env]
 LD_LIBRARY_PATH = "$PIXI_PROJECT_ROOT/build:$CONDA_PREFIX/lib"
